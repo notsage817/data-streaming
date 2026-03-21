@@ -14,8 +14,8 @@ class Ride:
     DOLocationID: int
     passenger_count:Optional[float]
     trip_distance: float
-    tip_amount:float
     total_amount: float
+    tip_amount:float
     lpep_pickup_datetime: str #epoch milliseconds
     lpep_dropoff_datetime: str # epoch milliseconds
 
