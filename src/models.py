@@ -26,7 +26,7 @@ def ride_from_row(row):
         passenger_count=None if math.isnan(row.passenger_count) else row.passenger_count,
         trip_distance=row.trip_distance,
         total_amount=abs(row.total_amount),
-        tip_amount=row.tip_amount,
+        tip_amount= abs(row.tip_amount),
         lpep_pickup_datetime= row.lpep_pickup_datetime.isoformat(timespec='seconds'),
         lpep_dropoff_datetime= row.lpep_dropoff_datetime.isoformat(timespec='seconds')
     )

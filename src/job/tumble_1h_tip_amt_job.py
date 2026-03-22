@@ -30,13 +30,13 @@ def create_events_source_kafka(t_env):
 
 
 def create_events_aggregated_sink(t_env):
-    table_name = 'processed_rides_tumble_5min'
+    table_name = 'processed_tips_tumble_1hr'
     sink_ddl = f"""
         CREATE TABLE {table_name} (
             window_start TIMESTAMP(3),
             PULocationID INT,
             num_trips BIGINT,
-            total_revenue DOUBLE,
+            total_tips DOUBLE,
             PRIMARY KEY (window_start, PULocationID) NOT ENFORCED
         ) WITH (
             'connector' = 'jdbc',
@@ -69,9 +69,9 @@ def log_aggregation():
             window_start,
             PULocationID,
             COUNT(*) AS num_trips,
-            SUM(total_amount) AS total_revenue
+            SUM(tip_amount) AS total_tips
         FROM TABLE(
-            TUMBLE(TABLE {source_table}, DESCRIPTOR(event_timestamp), INTERVAL '5' minute)
+            TUMBLE(TABLE {source_table}, DESCRIPTOR(event_timestamp), INTERVAL '1' hour)
         )
         GROUP BY window_start, PULocationID;
 

@@ -29,15 +29,15 @@ def create_events_source_kafka(t_env):
     return table_name
 
 
-def create_events_aggregated_sink(t_env):
-    table_name = 'processed_rides_tumble_5min'
+def create_session_sink(t_env):
+    table_name = 'processed_rides_ss_5min'
     sink_ddl = f"""
         CREATE TABLE {table_name} (
             window_start TIMESTAMP(3),
+            window_end   TIMESTAMP(3),
             PULocationID INT,
-            num_trips BIGINT,
-            total_revenue DOUBLE,
-            PRIMARY KEY (window_start, PULocationID) NOT ENFORCED
+            num_trips    BIGINT,
+            PRIMARY KEY (window_start, window_end, PULocationID) NOT ENFORCED
         ) WITH (
             'connector' = 'jdbc',
             'url' = 'jdbc:postgresql://postgres:5432/postgres',
@@ -51,35 +51,34 @@ def create_events_aggregated_sink(t_env):
     return table_name
 
 
-def log_aggregation():
+def log_session_aggregation():
     env = StreamExecutionEnvironment.get_execution_environment()
     env.enable_checkpointing(10 * 1000)
-    env.set_parallelism(3)
+    env.set_parallelism(1)
 
     settings = EnvironmentSettings.new_instance().in_streaming_mode().build()
     t_env = StreamTableEnvironment.create(env, environment_settings=settings)
 
     try:
         source_table = create_events_source_kafka(t_env)
-        aggregated_table = create_events_aggregated_sink(t_env)
+        sink_table = create_session_sink(t_env)
 
         t_env.execute_sql(f"""
-        INSERT INTO {aggregated_table}
+        INSERT INTO {sink_table}
         SELECT
             window_start,
+            window_end,
             PULocationID,
-            COUNT(*) AS num_trips,
-            SUM(total_amount) AS total_revenue
+            COUNT(*) AS num_trips
         FROM TABLE(
-            TUMBLE(TABLE {source_table}, DESCRIPTOR(event_timestamp), INTERVAL '5' minute)
+            SESSION(TABLE {source_table}, DESCRIPTOR(event_timestamp), INTERVAL '5' MINUTE)
         )
-        GROUP BY window_start, PULocationID;
-
+        GROUP BY window_start, window_end, PULocationID;
         """).wait()
 
     except Exception as e:
-        print("Writing records from Kafka to JDBC failed:", str(e))
+        print("Writing session windows to JDBC failed:", str(e))
 
 
 if __name__ == '__main__':
-    log_aggregation()
+    log_session_aggregation()
