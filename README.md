@@ -180,7 +180,7 @@ Fields used per event:
 The raw parquet data contains numpy types (`int32`, `int64`, `float64`) that are not directly JSON-serializable. `src/models.py` includes a custom encoder that converts these before publishing to Kafka.
 
 ### NaN values
-Some rows have `NaN` for `passenger_count`. These are handled in `ride_from_row()` by defaulting to `0`.
+Some rows have `NaN` for `passenger_count`. These are handled in dataclass and `ride_from_row()` by casting `passenger_count` to `Optional[float]` and read as `None`.
 
 ### Timezone
 All data originates from New York City. Timestamps are stored as-is without timezone conversion — keep this in mind when querying across daylight saving transitions.
