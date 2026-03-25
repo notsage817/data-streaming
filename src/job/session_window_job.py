@@ -71,7 +71,7 @@ def log_session_aggregation():
             PULocationID,
             COUNT(*) AS num_trips
         FROM TABLE(
-            SESSION(TABLE {source_table}, DESCRIPTOR(event_timestamp), INTERVAL '5' MINUTE)
+            SESSION(TABLE {source_table} PARTITION BY (PULocationID), DESCRIPTOR(event_timestamp), INTERVAL '5' MINUTE)
         )
         GROUP BY window_start, window_end, PULocationID;
         """).wait()
